@@ -30,7 +30,10 @@ public class TourVisioClientTests
             Password = "testpass"
         };
 
-        var httpClient = new HttpClient(handlerMock.Object);
+        var httpClient = new HttpClient(handlerMock.Object)
+        {
+            BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/")
+        };
         var optionsMock = new Mock<IOptions<TourVisioClientOptions>>();
         optionsMock.Setup(o => o.Value).Returns(options);
 
@@ -300,5 +303,28 @@ public class TourVisioClientTests
 
         Assert.NotNull(result);
         Assert.Equal("Grand Hotel", result.Body!.Hotel!.Name);
+    }
+
+    [Fact]
+    public async Task PostAsync_ThrowsTourVisioClientException_OnHttpError()
+    {
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized,
+                Content = new StringContent("Unauthorized", System.Text.Encoding.UTF8, "text/plain")
+            });
+
+        var client = CreateClient(handlerMock);
+
+        var ex = await Assert.ThrowsAsync<TourVisioClientException>(
+            () => client.LoginAsync());
+
+        Assert.Contains("401", ex.Message);
     }
 }
