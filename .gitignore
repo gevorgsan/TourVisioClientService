@@ -1,0 +1,39 @@
+## .gitignore for .NET projects
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+
+# User-specific files
+*.rsuser
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+.vs/
+
+# Rider
+.idea/
+
+# Rider / ReSharper
+_ReSharper*/
+
+# Publish
+[Pp]ublish/
+
+# Test results
+TestResults/
+coverage/
+*.trx
+*.xml
+
+# OS files
+.DS_Store
+Thumbs.db

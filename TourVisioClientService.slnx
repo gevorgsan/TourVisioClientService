@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TourVisio.ClientService.Tests/TourVisio.ClientService.Tests.csproj" />
+  <Project Path="TourVisio.ClientService/TourVisio.ClientService.csproj" />
+</Solution>
