@@ -31,7 +31,6 @@ public class TourVisioClient : ITourVisioClient
     {
         _httpClient = httpClient;
         _options = options.Value;
-        _httpClient.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
     }
 
     // ── Authentication ────────────────────────────────────────────────────────
@@ -186,10 +185,33 @@ public class TourVisioClient : ITourVisioClient
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
         }
 
-        using var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
-        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new TourVisioClientException(
+                $"Network error while calling '{relativeUrl}'.", ex);
+        }
 
-        return JsonSerializer.Deserialize<TResponse>(json, _jsonOptions) ?? new TResponse();
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (errorContent.Length > 500)
+                {
+                    errorContent = errorContent[..500] + "…";
+                }
+                throw new TourVisioClientException(
+                    $"Request to '{relativeUrl}' failed with status {(int)response.StatusCode} ({response.StatusCode}). Response: {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<TResponse>(json, _jsonOptions) ?? new TResponse();
+        }
     }
 
     private async Task EnsureTokenAsync(CancellationToken cancellationToken)

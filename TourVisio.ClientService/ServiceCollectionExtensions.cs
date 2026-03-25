@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace TourVisio.ClientService;
 
@@ -27,7 +28,11 @@ public static class ServiceCollectionExtensions
         Action<TourVisioClientOptions> configure)
     {
         services.Configure(configure);
-        services.AddHttpClient<ITourVisioClient, TourVisioClient>();
+        services.AddHttpClient<ITourVisioClient, TourVisioClient>((serviceProvider, client) =>
+        {
+            var options = serviceProvider.GetRequiredService<IOptions<TourVisioClientOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+        });
         return services;
     }
 }
